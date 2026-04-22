@@ -468,60 +468,24 @@ function drawPlayerBody(x,y,facing,walkOsc){
   // ── 목 ──
   fillRR(x+14,y+17,8,5,2,skin);
 
-  // ── 얼굴 (치비: 큰 머리) ──
-  fillRR(x+3,y+1,30,19,9,skin);
-  fillC(x+18,y+18,8,skin); // 턱
+  // ── 얼굴 (동그라미) ──
+  fillC(x+18,y+12,14,skin);
 
-  // ── 머리카락 (짧은 단발, 한국 남자아이) ──
-  // 뒤통수
-  cx.fillStyle=hair;cx.beginPath();cx.roundRect(x+2,y+0,32,11,9);cx.fill();
-  // 옆머리
-  fillRR(x+2,y+0,8,18,4,hair);
-  fillRR(x+26,y+0,8,18,4,hair);
-  // 앞머리 (한쪽으로 살짝 넘긴 스타일)
-  const bgX=f>0?x+9:x+8;
-  fillRR(bgX,y+8,17,8,4,hair);
-  // 삐죽 튀어나온 앞머리
-  fillRR(f>0?x+23:x+6,y+5,6,6,3,hair);
-
-  // ── 귀 ──
-  fillC(f>0?x+4:x+32,y+14,4,skin);
-
-  // ── 눈 (FF6 치비: 가로로 납작한 아시아형) ──
-  const ex=f>0?x+19:x+9;
-  const ey=y+11;
-  // 눈 흰자 (작은 가로 직사각형)
-  fillRR(ex,ey,8,5,1,'#fff8f0');
-  // 홍채 (진한 갈색)
-  fillRR(ex+1,ey+1,6,4,'#3e2008');
-  // 눈동자
-  fillRR(ex+2,ey+1,3,3,'#111');
-  // 하이라이트
-  fillR(ex+2,ey+1,1,1,'rgba(255,255,255,0.85)');
-  // 위 눈꺼풀 선 (쌍꺼풀 없는 일자눈)
-  cx.strokeStyle='#5d3a1a';cx.lineWidth=1.5;cx.lineCap='round';
-  cx.beginPath();cx.moveTo(ex,ey+0.5);cx.lineTo(ex+8,ey+0.5);cx.stroke();
-  // 속눈썹 (위쪽에 짧게)
-  cx.lineWidth=1;
-  [0,2,4,6].forEach(i=>{cx.beginPath();cx.moveTo(ex+i,ey);cx.lineTo(ex+i,ey-2);cx.stroke();});
-  // 눈썹 (진하고 약간 각진)
-  fillRR(ex-1,ey-5,10,2,1,hair);
-
-  // ── 코 (작게) ──
-  cx.fillStyle='rgba(200,120,90,0.45)';
-  cx.beginPath();cx.ellipse(x+18+f*2,y+16,2,1.3,0,0,Math.PI*2);cx.fill();
-
-  // ── 입 (작은 미소) ──
-  cx.strokeStyle='#c07070';cx.lineWidth=1.5;cx.lineCap='round';
+  // ── 머리카락 (윗부분만) ──
+  cx.fillStyle=hair;
   cx.beginPath();
-  cx.moveTo(x+14+f,y+20);
-  cx.quadraticCurveTo(x+18+f,y+22,x+22+f,y+20);
-  cx.stroke();
+  cx.arc(x+18,y+12,14,Math.PI,Math.PI*2);
+  cx.fill();
 
-  // ── 볼 홍조 (은은하게) ──
-  cx.fillStyle='rgba(255,140,120,0.22)';
-  cx.beginPath();cx.ellipse(x+7,y+16,4.5,2.5,0,0,Math.PI*2);cx.fill();
-  cx.beginPath();cx.ellipse(x+29,y+16,4.5,2.5,0,0,Math.PI*2);cx.fill();
+  // ── 눈 (까만 동그라미 두 개) ──
+  fillC(x+13,y+13,2.5,'#1a1a1a');
+  fillC(x+23,y+13,2.5,'#1a1a1a');
+
+  // ── 입 (미소) ──
+  cx.strokeStyle='#c07070';cx.lineWidth=1.8;cx.lineCap='round';
+  cx.beginPath();
+  cx.arc(x+18,y+15,4,0.2,Math.PI-0.2);
+  cx.stroke();
 }
 
 // ── Draw: enemies ─────────────────────────────────────────────────────────────
