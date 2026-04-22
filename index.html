@@ -400,70 +400,128 @@ function drawPlayer(){
 
 function drawPlayerBody(x,y,facing,walkOsc){
   const f=facing;
-  const ll=walkOsc||0;
+  const skin='#f5c5a3', hair='#1c1c1c';
+  const shirtC='#e53935', pantsC='#1565c0', shoeC='#4e342e';
 
-  // ── 다리 (반바지 아래) ──
-  fillRR(x+5,y+36,13,16,3,'#ffcc80');   // 왼쪽 다리 (살색)
-  fillRR(x+18,y+36,13,16,3,'#ffcc80');  // 오른쪽 다리
-  // 신발 (흰 운동화)
-  fillRR(x+2+ll, y+48,17,7,3,'#fff');
-  fillRR(x+17-ll,y+48,17,7,3,'#fff');
-  cx.strokeStyle='#bbb';cx.lineWidth=1;
-  cx.strokeRect(x+2+ll,y+48,17,7);
-  cx.strokeRect(x+17-ll,y+48,17,7);
+  // 이동/점프 상태 감지
+  const isMoving=Math.abs(walkOsc)>0.3;
+  const isAir=player&&!player.onGround&&!player.dead;
+  // 걷기 프레임: 7틱마다 0/1 교체
+  const wf=isMoving?Math.floor(gt/7)%2:0;
 
-  // ── 몸통 (밝은 줄무늬 티셔츠) ──
-  fillRR(x+2,y+20,32,20,5,'#ef5350');   // 빨간 티셔츠
-  // 흰 줄무늬
-  fillR(x+2,y+24,32,4,'rgba(255,255,255,0.35)');
-  fillR(x+2,y+31,32,4,'rgba(255,255,255,0.35)');
-  // 반바지
-  fillRR(x+3,y+35,30,10,4,'#1565c0');
-
-  // ── 팔 ──
-  if(f>0){
-    fillRR(x-4,y+21,10,14,4,'#ffcc80'); // 왼팔
-    fillRR(x+30,y+21,10,14,4,'#ffcc80');// 오른팔
-  } else {
-    fillRR(x-4,y+21,10,14,4,'#ffcc80');
-    fillRR(x+30,y+21,10,14,4,'#ffcc80');
+  // ── 다리 오프셋 계산 ──
+  // l=왼쪽다리, r=오른쪽다리  (x: 앞뒤 흔들림, y: 들리는 높이)
+  let lx=0,rx=0,ly=0,ry=0;
+  if(isAir){
+    // 점프: 양발을 뒤로 접음
+    lx=-3*f; rx=3*f; ly=3; ry=3;
+  } else if(isMoving){
+    // wf=0: 왼발 앞, 오른발 뒤 / wf=1: 반대
+    lx=f*(wf===0?5:-5);  rx=f*(wf===0?-5:5);
+    ly=wf===0?0:-3;      ry=wf===0?-3:0;
   }
 
-  // ── 얼굴 (통통하고 귀엽게) ──
-  // 얼굴 기본 (살색)
-  fillC(x+PW/2, y+11, 16,'#ffcc80');
-  // 볼터치 (귀여운 홍조)
-  const chkX=f>0?x+23:x+9;
-  cx.fillStyle='rgba(255,150,150,0.5)';
-  cx.beginPath();cx.ellipse(chkX,y+14,5,3.5,0,0,Math.PI*2);cx.fill();
+  // ── 뒷팔 (몸통 뒤에 그림) ──
+  const armSw=isMoving?(wf===0?-5:5)*f:0;
+  fillRR(f>0?x-2:x+30, y+25+armSw, 8,12,3,skin);
 
-  // ── 까만 머리 ──
-  // 머리카락 뒷부분
-  fillC(x+PW/2,y+4,15,'#212121');
-  // 앞머리 (옆으로 가른 스타일)
-  cx.fillStyle='#212121';cx.beginPath();
-  cx.ellipse(x+PW/2,y+0,14,8,0,Math.PI,Math.PI*2);cx.fill();
-  // 앞머리 한 가닥
-  fillRR(f>0?x+20:x+6, y-4, 8, 10, 4,'#212121');
+  // ── 뒷다리 신발 ──
+  if(f>0){
+    fillRR(x+18+rx,y+44+ry,13,6,2,shoeC);
+  } else {
+    fillRR(x+5+lx, y+44+ly,13,6,2,shoeC);
+  }
 
-  // ── 눈 ──
-  const eyeX=f>0?x+21:x+11;
-  // 눈 흰자
-  fillC(eyeX, y+10, 4,'#fff');
-  // 눈동자 (까만 눈)
-  fillC(eyeX+f*1.5, y+10.5, 2.8,'#1a1a1a');
-  // 눈 하이라이트
-  fillC(eyeX+f*2.5, y+9, 1,'#fff');
-  // 눈썹
-  cx.strokeStyle='#212121';cx.lineWidth=2;cx.lineCap='round';
-  cx.beginPath();cx.moveTo(eyeX-4,y+5);cx.lineTo(eyeX+4,y+4);cx.stroke();
+  // ── 뒷다리 ──
+  if(f>0){
+    fillRR(x+19+rx,y+34+ry,10,12,3,pantsC);
+  } else {
+    fillRR(x+6+lx, y+34+ly,10,12,3,pantsC);
+  }
 
-  // ── 코 & 입 ──
-  fillC(x+PW/2+f*3, y+14, 1.8,'#f48fb1');
-  // 미소
-  cx.strokeStyle='#c2185b';cx.lineWidth=1.8;cx.lineCap='round';
+  // ── 반바지 허리 ──
+  fillRR(x+3,y+32,30,6,3,pantsC);
+
+  // ── 몸통 (티셔츠) ──
+  fillRR(x+3,y+20,30,14,5,shirtC);
+  fillR(x+3,y+26,30,2,'rgba(255,255,255,0.35)');
+  // 칼라
+  fillRR(x+12,y+20,12,5,3,'#ffecec');
+
+  // ── 앞다리 신발 ──
+  if(f>0){
+    fillRR(x+5+lx, y+44+ly,13,6,2,shoeC);
+  } else {
+    fillRR(x+18+rx,y+44+ry,13,6,2,shoeC);
+  }
+
+  // ── 앞다리 ──
+  if(f>0){
+    fillRR(x+6+lx, y+34+ly,10,12,3,pantsC);
+  } else {
+    fillRR(x+19+rx,y+34+ry,10,12,3,pantsC);
+  }
+
+  // ── 앞팔 ──
+  fillRR(f>0?x+30:x-2, y+25-armSw, 8,12,3,skin);
+
+  // ── 목 ──
+  fillRR(x+14,y+17,8,5,2,skin);
+
+  // ── 얼굴 (치비: 큰 머리) ──
+  fillRR(x+3,y+1,30,19,9,skin);
+  fillC(x+18,y+18,8,skin); // 턱
+
+  // ── 머리카락 (짧은 단발, 한국 남자아이) ──
+  // 뒤통수
+  cx.fillStyle=hair;cx.beginPath();cx.roundRect(x+2,y+0,32,11,9);cx.fill();
+  // 옆머리
+  fillRR(x+2,y+0,8,18,4,hair);
+  fillRR(x+26,y+0,8,18,4,hair);
+  // 앞머리 (한쪽으로 살짝 넘긴 스타일)
+  const bgX=f>0?x+9:x+8;
+  fillRR(bgX,y+8,17,8,4,hair);
+  // 삐죽 튀어나온 앞머리
+  fillRR(f>0?x+23:x+6,y+5,6,6,3,hair);
+
+  // ── 귀 ──
+  fillC(f>0?x+4:x+32,y+14,4,skin);
+
+  // ── 눈 (FF6 치비: 가로로 납작한 아시아형) ──
+  const ex=f>0?x+19:x+9;
+  const ey=y+11;
+  // 눈 흰자 (작은 가로 직사각형)
+  fillRR(ex,ey,8,5,1,'#fff8f0');
+  // 홍채 (진한 갈색)
+  fillRR(ex+1,ey+1,6,4,'#3e2008');
+  // 눈동자
+  fillRR(ex+2,ey+1,3,3,'#111');
+  // 하이라이트
+  fillR(ex+2,ey+1,1,1,'rgba(255,255,255,0.85)');
+  // 위 눈꺼풀 선 (쌍꺼풀 없는 일자눈)
+  cx.strokeStyle='#5d3a1a';cx.lineWidth=1.5;cx.lineCap='round';
+  cx.beginPath();cx.moveTo(ex,ey+0.5);cx.lineTo(ex+8,ey+0.5);cx.stroke();
+  // 속눈썹 (위쪽에 짧게)
+  cx.lineWidth=1;
+  [0,2,4,6].forEach(i=>{cx.beginPath();cx.moveTo(ex+i,ey);cx.lineTo(ex+i,ey-2);cx.stroke();});
+  // 눈썹 (진하고 약간 각진)
+  fillRR(ex-1,ey-5,10,2,1,hair);
+
+  // ── 코 (작게) ──
+  cx.fillStyle='rgba(200,120,90,0.45)';
+  cx.beginPath();cx.ellipse(x+18+f*2,y+16,2,1.3,0,0,Math.PI*2);cx.fill();
+
+  // ── 입 (작은 미소) ──
+  cx.strokeStyle='#c07070';cx.lineWidth=1.5;cx.lineCap='round';
   cx.beginPath();
-  cx.arc(x+PW/2+f*2,y+16,4,0.1,Math.PI-0.1);cx.stroke();
+  cx.moveTo(x+14+f,y+20);
+  cx.quadraticCurveTo(x+18+f,y+22,x+22+f,y+20);
+  cx.stroke();
+
+  // ── 볼 홍조 (은은하게) ──
+  cx.fillStyle='rgba(255,140,120,0.22)';
+  cx.beginPath();cx.ellipse(x+7,y+16,4.5,2.5,0,0,Math.PI*2);cx.fill();
+  cx.beginPath();cx.ellipse(x+29,y+16,4.5,2.5,0,0,Math.PI*2);cx.fill();
 }
 
 // ── Draw: enemies ─────────────────────────────────────────────────────────────
