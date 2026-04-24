@@ -43,6 +43,34 @@ function sfxCoin(){tone(880,0.04,'sine',0.28);setTimeout(()=>tone(1320,0.14,'sin
 function sfxClear(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,0.32,'sine',0.28),i*135));}
 function sfxTitle(){[392,494,587,784].forEach((f,i)=>setTimeout(()=>tone(f,0.25,'sine',0.22),i*120));}
 
+// ── Sprite sheet (지율이.png  3×3 grid)
+const sprImg=new Image();
+let sprReady=false;
+sprImg.onload=()=>{sprReady=true;};
+sprImg.src='지율이.png';
+// [col, row] in 3×3 grid
+// Row0: run-stride-A, run-stride-B, fall/surprised
+// Row1: run-stride-C, jump-excited,  run-upright
+// Row2: crouch-mushroom, crouch-read, [game objects]
+const SPF={walk1:[0,0],walk2:[0,1],jump:[1,1],idle:[2,1],dead:[2,0]};
+
+function drawSprite(ox,oy,facing,walkOsc,inAir,isDead){
+  if(!sprReady){drawCat(ox,oy,facing,walkOsc,inAir);return;}
+  const sw=sprImg.naturalWidth/3,sh=sprImg.naturalHeight/3;
+  let f;
+  if(isDead)f=SPF.dead;
+  else if(inAir)f=SPF.jump;
+  else if(Math.abs(walkOsc)>0.3)f=(Math.floor(gt/7)%2===0)?SPF.walk1:SPF.walk2;
+  else f=SPF.idle;
+  const[sc,sr]=f;
+  const dh=PH*2.6,dw=dh;
+  const dx=ox+PW/2-dw/2,dy=oy+PH-dh+dh*0.05;
+  cx.save();
+  if(facing<0){cx.translate(dx+dw/2,0);cx.scale(-1,1);cx.translate(-(dx+dw/2),0);}
+  cx.drawImage(sprImg,sc*sw,sr*sh,sw,sh,dx,dy,dw,dh);
+  cx.restore();
+}
+
 // ── Keyboard input
 const K={},JP={};
 addEventListener('keydown',e=>{
@@ -595,11 +623,11 @@ function drawPlayer(){
   const sy=player.y;
   if(player.dead){
     cx.save();cx.translate(sx+PW/2,sy+PH/2);cx.rotate(player.deadRot);
-    drawCat(-PW/2,-PH/2,player.facing,0,true);
+    drawSprite(-PW/2,-PH/2,player.facing,0,true,true);
     cx.restore();return;
   }
   const walkOsc=player.onGround&&Math.abs(player.vx)>0.5?Math.sin(gt*0.28)*4:0;
-  drawCat(sx,sy,player.facing,walkOsc,!player.onGround);
+  drawSprite(sx,sy,player.facing,walkOsc,!player.onGround,false);
 }
 
 // ── Enemies
