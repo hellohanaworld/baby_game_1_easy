@@ -150,12 +150,12 @@ function removeWhiteBG(img){
 
 let sprSrc=null,sprReady=false;
 const sprImg=new Image();
-sprImg.onload=()=>{try{sprSrc=removeWhiteBG(sprImg);}catch(e){sprSrc=sprImg;}sprReady=true;};
+sprImg.onload=()=>{sprSrc=sprImg;sprReady=true;};
 sprImg.src='지율이5.png';
 
 let sprSrc2=null,sprReady2=false;
 const sprImg2=new Image();
-sprImg2.onload=()=>{try{sprSrc2=removeWhiteBG(sprImg2);}catch(e){sprSrc2=sprImg2;}sprReady2=true;};
+sprImg2.onload=()=>{sprSrc2=sprImg2;sprReady2=true;};
 sprImg2.src='해인이5.png';
 
 // Pixel-measured offsets per character per pose
