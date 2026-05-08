@@ -260,7 +260,7 @@ function jpTap(){const v=_anyTap;_anyTap=false;return v;}
 const GY=390;
 const PW=38,PH=52;
 const EW=52,EH=46;
-const GRAV=0.58,JVY=-13.5,SPD=4.8;
+const GRAV=0.58,JVY=-15.5,SPD=4.8;
 const PLAT_H=20;
 
 const WORDS=['나무','바다','하늘','구름','토끼','돼지','오리','나비','사자','꿀벌',
@@ -297,7 +297,7 @@ const MHINTS=[
   '🔑 빛나는 열쇠를 찾아야 황금 문이 열려! 잘 살펴봐!',
 ];
 
-const GHOST_COUNTS=[0,1,1,2,2,1,1,2,3,2];
+const GHOST_COUNTS=[0,0,0,0,0,0,0,0,0,0];
 
 // ── Stage definitions
 const STAGES=[
@@ -315,7 +315,7 @@ const STAGES=[
 
 // ── Game state
 let state='title';
-let stageNum=1,lives=3,score=0,hiScore=0;
+let stageNum=1,lives=100,score=0,hiScore=0;
 let deathWord='';
 let player,enemies,coins,sd,th=THEMES[0];
 let cam={x:0};
@@ -329,14 +329,7 @@ let ghosts=[];
 function overlaps(ax,ay,aw,ah,bx,by,bw,bh){return ax<bx+bw&&ax+aw>bx&&ay<by+bh&&ay+ah>by;}
 function getSolids(){
   const s=sd.plats.map(([x,y,w])=>({x,y,w,h:PLAT_H}));
-  if(sd.pits&&sd.pits.length){
-    const sorted=[...sd.pits].sort((a,b)=>a[0]-b[0]);
-    let lx=-9999;
-    for(const[px,pw] of sorted){s.push({x:lx,y:GY,w:px-lx,h:200});lx=px+pw;}
-    s.push({x:lx,y:GY,w:sd.w+9999,h:200});
-  } else {
-    s.push({x:-9999,y:GY,w:99999,h:200});
-  }
+  s.push({x:-9999,y:GY,w:99999,h:200});
   if(stageNum===6&&mech.bubbles){
     for(const b of mech.bubbles)s.push({x:b.x,y:b.y,w:b.w,h:b.h});
   }
@@ -381,7 +374,7 @@ function initMechanic(n){
       {x:10,y:GY-PH,vx:0,vy:0,alive:true,respawn:0,lag:80},
     ];
   }
-  if(n===5){mech.lavaY=H+120;mech.lavaSpeed=0.32;}
+  if(n===5){mech.lavaY=H+120;mech.lavaSpeed=0.06;}
   if(n===6){
     mech.bubbles=[
       {x:200,y:GY-70,w:70,h:14,vy:-0.5},
@@ -394,8 +387,8 @@ function initMechanic(n){
   if(n===7){
     enemies=[];
     mech.boss={
-      x:1900,y:GY-110,vx:1.4,w:110,h:90,
-      hp:20,maxHp:20,dead:false,deadTimer:0,
+      x:1900,y:GY-110,vx:0.7,w:110,h:90,
+      hp:3,maxHp:3,dead:false,deadTimer:0,
       patL:1650,patR:2500,phase:1,flash:0
     };
     mech.flagY=280;mech.rumbleT=0;mech.shake=0;
@@ -422,7 +415,7 @@ function initStage(n){
   stageNum=n;sd=STAGES[n-1];th=THEMES[n-1];
   player={x:80,y:GY-PH,vx:0,vy:0,w:PW,h:PH,onGround:false,facing:1,dead:false,deadTimer:0,deadRot:0};
   const makeEnemy=(ex,wIdx,range,gy)=>({
-    x:ex,y:(gy!==undefined?gy:GY)-EH,w:EW,h:EH,vx:1.3,
+    x:ex,y:(gy!==undefined?gy:GY)-EH,w:EW,h:EH,vx:0.5,
     word:WORDS[wIdx%WORDS.length],color:ECLR[wIdx%ECLR.length],
     patL:ex-range,patR:ex+range,dead:false,deadTimer:0,
     groundY:(gy!==undefined?gy:GY)-EH,
@@ -491,7 +484,7 @@ function updateMechanic(solids){
 
   if(n===5&&mech.lavaY!==undefined){
     mech.lavaY-=mech.lavaSpeed;
-    mech.lavaSpeed=Math.min(mech.lavaSpeed+0.0006,1.2);
+    mech.lavaSpeed=Math.min(mech.lavaSpeed+0.00008,0.20);
     if(!player.dead&&player.y+PH>mech.lavaY)killPlayer();
   }
 
@@ -514,7 +507,6 @@ function updateMechanic(solids){
         if(prevBottom<=boss.y+boss.h*0.5&&player.y+PH<boss.y+boss.h*0.65){
           boss.hp--;boss.flash=14;player.vy=JVY*0.52;score+=150;sfxStomp();sfxBoss();
           if(boss.hp<=0){boss.dead=true;boss.deadTimer=150;score+=3000;sfxClear();}
-          if(boss.hp===boss.maxHp/2&&boss.phase===1){boss.phase=2;boss.vx*=1.7;}
         } else killPlayer(WORDS[17]);
       }
     } else {
@@ -1580,7 +1572,7 @@ function drawEnemies(){
 // ── HUD
 function drawHUD(){
   cx.fillStyle='rgba(0,0,0,0.5)';cx.fillRect(0,0,W,38);
-  for(let i=0;i<lives;i++)txt('♥',22+i*28,19,20,'#ef5350');
+  txt('♥',22,19,20,'#ef5350');txt(`×${lives}`,46,19,15,'#ef5350');
   txtS(`점수: ${score}`,W/2,19,16,'#fff','#111');
   txtS(`${th.name}  ${stageNum}/10`,W-115,19,13,'#fff8e1','#111');
   if(hiScore>0)txt(`최고: ${hiScore}`,W-115,30,10,'#ffd600');
@@ -1860,19 +1852,27 @@ function drawWordCard(){
     fillRR(W/2-192,H/2-126,368,10,0,'#ffd600');
     // Label
     txt('이 단어를 외워봐요! 📖',W/2,H/2-136,13,'#555');
-    // Word – BIG
-    txtS(deathWord,W/2,H/2-40,76,'#1a237e','rgba(0,0,0,0.06)');
-    // Speaker + repeat counter
-    const repN=Math.min(3,Math.floor(timer/400)+1);
-    cx.font='24px sans-serif';cx.textAlign='center';cx.textBaseline='middle';
-    cx.fillText('🔊',W/2-22,H/2+50);
-    txt(`${repN} / 3`,W/2+18,H/2+50,13,'#888');
-    // Countdown progress bar (20s = 1200 frames)
-    const prog=Math.max(0,1-timer/1200);
-    fillRR(W/2-192,H/2+64,368,10,5,'rgba(0,0,0,0.2)');
-    if(prog>0)fillRR(W/2-192,H/2+64,368*prog,10,5,'#ffd600');
-    const secsLeft=Math.max(0,20-Math.floor(timer/60));
-    txt(`${secsLeft}초 후 자동으로 넘어가요`,W/2,H/2+83,11,'rgba(255,255,255,0.55)');
+    // Word – BIG with per-rep pulse
+    const repN=timer<120?1:timer<240?2:3;
+    const repAge=timer-(repN-1)*120;
+    const pulse=Math.max(0,1-repAge/28)*0.28;
+    cx.save();cx.translate(W/2,H/2-40);cx.scale(1+pulse,1+pulse);
+    txtS(deathWord,0,0,76,'#1a237e','rgba(0,0,0,0.06)');
+    cx.restore();
+    // Rep indicator circles (● ● ●)
+    for(let i=1;i<=3;i++){
+      const done=i<repN,cur=i===repN;
+      fillC(W/2+(i-2)*56,H/2+52,cur?16:12,cur?'#ffd600':done?'#aed6f1':'rgba(255,255,255,0.2)');
+      txt(i+'',W/2+(i-2)*56,H/2+52,cur?14:11,cur?'#333':done?'#1a5276':'rgba(255,255,255,0.5)');
+    }
+    cx.font='28px sans-serif';cx.textAlign='center';cx.textBaseline='middle';
+    cx.globalAlpha=repAge<22?1:0.6;cx.fillText('🔊',W/2+95,H/2+52);cx.globalAlpha=1;
+    // Countdown progress bar (6s = 360 frames)
+    const prog=Math.max(0,1-timer/360);
+    fillRR(W/2-192,H/2+72,368,10,5,'rgba(0,0,0,0.2)');
+    if(prog>0)fillRR(W/2-192,H/2+72,368*prog,10,5,'#ffd600');
+    const secsLeft=Math.max(0,6-Math.floor(timer/60));
+    txt(`${secsLeft}초 후 자동으로 넘어가요`,W/2,H/2+91,11,'rgba(255,255,255,0.55)');
   } else {
     txtS('괜찮아! 다시 도전해봐! 💪',W/2,H/2-45,28,'#fff','rgba(0,0,0,0.35)');
   }
@@ -2003,7 +2003,7 @@ function loop(){
       }
       // Start game
       if(jp('Space')||jp('ArrowUp')||jpTouch()||jpTap()){
-        stageNum=1;lives=3;score=0;initStage(1);state='playing';sfxTitle();
+        stageNum=1;lives=100;score=0;initStage(1);state='playing';sfxTitle();
       }
       break;
     case 'playing':
@@ -2024,8 +2024,13 @@ function loop(){
     case 'wordcard':
       drawWordCard();
       timer++;
-      if(deathWord){const iv=400;if(timer===1||timer===iv+1||timer===iv*2+1)speakWord(deathWord);}
-      if(timer>1200||(timer>40&&(jp('Space')||jp('ArrowUp')||jpTouch()||jpTap()))){
+      if(deathWord&&(timer===1||timer===121||timer===241)){
+        window.speechSynthesis&&window.speechSynthesis.cancel();
+        const wu=new SpeechSynthesisUtterance(deathWord);wu.lang='ko-KR';wu.rate=0.75;wu.pitch=1.1;wu.volume=1;
+        window.speechSynthesis.speak(wu);
+      }
+      const _canSkip=deathWord?timer>350:timer>60;
+      if(timer>370||(_canSkip&&(jp('Space')||jp('ArrowUp')||jpTouch()||jpTap()))){
         window.speechSynthesis&&window.speechSynthesis.cancel();
         if(lives<=0){if(score>hiScore)hiScore=score;state='halloffame';showHallOfFame();timer=0;}
         else{initStage(stageNum);state='playing';}
@@ -2038,7 +2043,7 @@ function loop(){
       drawGameOver();
       timer++;
       if(timer>90&&(jp('Space')||jp('ArrowUp')||jpTouch()||jpTap())){
-        stageNum=1;lives=3;score=0;initStage(1);state='playing';sfxTitle();
+        stageNum=1;lives=100;score=0;initStage(1);state='playing';sfxTitle();
       }
       break;
     case 'win':
@@ -2110,7 +2115,7 @@ document.getElementById('hof-submit').addEventListener('click',()=>{
 });
 document.getElementById('hof-restart').addEventListener('click',()=>{
   document.getElementById('hof').style.display='none';
-  stageNum=1;lives=3;score=0;state='title';sfxTitle();
+  stageNum=1;lives=100;score=0;state='title';sfxTitle();
 });
 
 loop();
