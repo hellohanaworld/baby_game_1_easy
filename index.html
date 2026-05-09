@@ -558,7 +558,6 @@ function updateMechanic(solids){
 
 // ── Update
 function updatePlaying(){
-  gt++;
   spawnNumRain();
   // Bubble platform update must happen before getSolids
   if(stageNum===6&&mech.bubbles){
@@ -1978,8 +1977,11 @@ function drawNumRain(){
 }
 
 // ── Main loop
-function loop(){
+let _lastTime=0;
+function loop(ts){
   requestAnimationFrame(loop);
+  if(ts-_lastTime<15.5)return; // 60fps cap (16.67ms per frame)
+  _lastTime=ts;
   gt++;
   cx.clearRect(0,0,W,H);
   switch(state){
