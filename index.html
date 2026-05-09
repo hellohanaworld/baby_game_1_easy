@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <title>아이들의 한글나라</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -2059,16 +2060,23 @@ function loop(ts){
 }
 
 // ── Hall of Fame
+const SUPA=supabase.createClient('https://jsxygoeipoimsrtjdcsc.supabase.co','sb_publishable_4--GgNlSw-wQDyTovIyoSw_l9q-uAca');
 function hofEsc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function loadHall(){try{return JSON.parse(localStorage.getItem('hof_v1')||'[]');}catch(e){return[];}}
-function saveHall(entry){
-  const h=loadHall();h.push(entry);
-  h.sort((a,b)=>b.score-a.score);
-  if(h.length>20)h.length=20;
-  try{localStorage.setItem('hof_v1',JSON.stringify(h));}catch(ex){}
+async function loadHall(){
+  try{
+    const {data,error}=await SUPA.from('scores').select('*').order('score',{ascending:false}).limit(20);
+    if(error)throw error;
+    return data||[];
+  }catch(e){console.warn('순위 불러오기 실패',e);return[];}
+}
+async function saveHall(entry){
+  try{
+    const {error}=await SUPA.from('scores').insert([entry]);
+    if(error)throw error;
+  }catch(e){console.warn('순위 저장 실패',e);}
 }
 function renderHofList(entries){
-  if(!entries)entries=loadHall();
+  if(!entries)entries=[];
   const el=document.getElementById('hof-list');
   if(!entries.length){
     el.innerHTML='<div style="background:#fff;border-radius:14px;text-align:center;padding:28px;color:#bbb;font-size:15px;box-shadow:0 2px 10px rgba(0,0,0,0.06);">아직 기록이 없어요 😊</div>';
@@ -2095,22 +2103,26 @@ function renderHofList(entries){
     }).join('')}
   </div>`;
 }
-function showHallOfFame(){
-  document.getElementById('hof-sub').textContent=(arguments[0]?'🎉 게임 클리어! · ':'게임 오버 · ')+`점수 ${score.toLocaleString()}점  |  ${stageNum}탄  |  최고 ${hiScore.toLocaleString()}점`;
+async function showHallOfFame(isWin){
+  document.getElementById('hof-sub').textContent=(isWin?'🎉 게임 클리어! · ':'게임 오버 · ')+`점수 ${score.toLocaleString()}점  |  ${stageNum}탄  |  최고 ${hiScore.toLocaleString()}점`;
   document.getElementById('hof-form').style.display='';
   document.getElementById('hof-name').value='';
   document.getElementById('hof-comment').value='';
-  renderHofList();
+  document.getElementById('hof-list').innerHTML='<div style="text-align:center;padding:30px;color:#aaa;font-size:15px;">순위 불러오는 중...</div>';
   document.getElementById('hof').style.display='block';
   setTimeout(()=>document.getElementById('hof-name').focus(),80);
+  const entries=await loadHall();
+  renderHofList(entries);
 }
-document.getElementById('hof-submit').addEventListener('click',()=>{
+document.getElementById('hof-submit').addEventListener('click',async()=>{
   const name=document.getElementById('hof-name').value.trim()||'???';
   const comment=document.getElementById('hof-comment').value.trim();
-  saveHall({name,comment,score,stage:stageNum,date:new Date().toLocaleDateString('ko-KR')});
+  const btn=document.getElementById('hof-submit');
+  btn.disabled=true;btn.textContent='저장 중...';
+  await saveHall({name,comment,score,stage:stageNum,date:new Date().toLocaleDateString('ko-KR')});
   document.getElementById('hof-form').style.display='none';
-  // 내 항목에 _isMe 표시 (메모리 내에서만, localStorage에는 저장 안 함)
-  const fresh=loadHall();
+  btn.disabled=false;btn.textContent='등록하기';
+  const fresh=await loadHall();
   const myEntry=fresh.find(e=>e.name===name&&e.score===score&&e.stage===stageNum);
   if(myEntry)myEntry._isMe=true;
   renderHofList(fresh);
