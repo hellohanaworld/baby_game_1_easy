@@ -92,6 +92,23 @@ function speakWord(word){
   say(word,0.75,1.0);
 }
 
+// iOS Safari requires audio/TTS to be unlocked inside a user gesture.
+let audioUnlocked=false;
+function unlockAudio(){
+  if(audioUnlocked)return;
+  audioUnlocked=true;
+  try{const a=getAC();if(a.state==='suspended')a.resume();}catch(e){}
+  if(window.speechSynthesis){
+    try{
+      const u=new SpeechSynthesisUtterance(' ');u.volume=0;u.rate=2;u.lang='ko-KR';
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  }
+}
+addEventListener('touchstart',unlockAudio,{passive:true});
+addEventListener('mousedown',unlockAudio);
+addEventListener('keydown',unlockAudio);
+
 // ── Sprite sheets (2×2 grid each)
 // [0,0] idle  [1,0] jump  [0,1] run  [1,1] dead
 const SPF={walk1:[0,1],jump:[1,0],idle:[0,0],dead:[1,1]};
