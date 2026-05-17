@@ -60,7 +60,9 @@ const GVOL=0.45;
 function getAC(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();return AC;}
 function tone(freq,dur,type,vol,freqEnd){
   try{
-    const a=getAC(),o=a.createOscillator(),g=a.createGain();
+    const a=getAC();
+    if(a.state==='suspended')a.resume();
+    const o=a.createOscillator(),g=a.createGain();
     o.connect(g);g.connect(a.destination);
     o.type=type||'square';
     o.frequency.setValueAtTime(freq,a.currentTime);
@@ -93,11 +95,18 @@ function speakWord(word){
 }
 
 // iOS Safari requires audio/TTS to be unlocked inside a user gesture.
+// resume() alone is not enough — must actually produce sound in the gesture.
 let audioUnlocked=false;
 function unlockAudio(){
   if(audioUnlocked)return;
-  audioUnlocked=true;
-  try{const a=getAC();if(a.state==='suspended')a.resume();}catch(e){}
+  try{
+    const a=getAC();
+    if(a.state==='suspended')a.resume();
+    const buf=a.createBuffer(1,1,22050);
+    const src=a.createBufferSource();
+    src.buffer=buf;src.connect(a.destination);src.start(0);
+    audioUnlocked=true;
+  }catch(e){}
   if(window.speechSynthesis){
     try{
       const u=new SpeechSynthesisUtterance(' ');u.volume=0;u.rate=2;u.lang='ko-KR';
@@ -106,6 +115,7 @@ function unlockAudio(){
   }
 }
 addEventListener('touchstart',unlockAudio,{passive:true});
+addEventListener('touchend',unlockAudio,{passive:true});
 addEventListener('mousedown',unlockAudio);
 addEventListener('keydown',unlockAudio);
 
